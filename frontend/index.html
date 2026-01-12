@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>PhishGuard AI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="matrixCanvas"></canvas>
+
+<script>
+const body = document.body;
+const btn = document.getElementById("themeToggle");
+
+btn.onclick = () => {
+    body.classList.toggle("light-mode");
+
+    // animation du bouton
+    btn.classList.add("pulse");
+    setTimeout(() => btn.classList.remove("pulse"), 300);
+};
+</script>
+
+
+<div class="container">
+
+    <h1>🛡️ PhishGuard AI – Cyber Assistant</h1>
+    <p class="subtitle">Détection de phishing + Chatbot cybersécurité</p>
+
+    <!-- SECTION PHISHING -->
+    <div class="card">
+        <h2>🔍 Analyse de Phishing</h2>
+        <textarea id="phishingInput" placeholder="Collez ici un message ou URL suspect..."></textarea>
+        <button onclick="analyzePhishing()">Analyser</button>
+        <div id="phishingResult" class="result"></div>
+    </div>
+
+    <!-- SECTION CHATBOT -->
+    <div class="card">
+        <h2>🤖 Chatbot Phish-CyberSec</h2>
+
+        <div id="chatbox" class="chatbox"></div>
+
+        <div class="chat-input">
+            <input type="text" id="userMessage" placeholder="Pose une question en phishing ou cybersécurité...">
+            <button onclick="sendMessage()">Envoyer</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

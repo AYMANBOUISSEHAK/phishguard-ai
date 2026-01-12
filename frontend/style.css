@@ -1,0 +1,312 @@
+/* ----------------------------------------------------
+   BLUE MATRIX DIGITAL RAIN — Cybersecurity Theme
+---------------------------------------------------- */
+:root {
+    --bg-color: #02040a;
+    --text-color: #e8ecff;
+    --accent: #3fa4ff;
+    --accent-glow: #60c0ff;
+    --card-bg: rgba(10, 20, 40, 0.65);
+    --card-border: rgba(90, 160, 255, 0.28);
+}
+
+/* ----------------------------------------------
+   GLOBAL
+---------------------------------------------- */
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Roboto", monospace;
+    background: var(--bg-color);
+    color: var(--text-color);
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ----------------------------------------------------
+   DIGITAL RAIN BACKGROUND (BLEU)
+---------------------------------------------------- */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: black;
+    z-index: -2;
+}
+
+/* Canvas pluie digitale */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    background: none;
+}
+
+
+@keyframes rain {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 2000px; }
+}
+
+/* ----------------------------------------------------
+   CONTAINER
+---------------------------------------------------- */
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+
+/* ----------------------------------------------------
+   TITLES
+---------------------------------------------------- */
+h1 {
+    text-align: center;
+    font-size: 2.4rem;
+    text-shadow: 0 0 18px rgba(80, 170, 255, 0.45);
+}
+
+.subtitle {
+    text-align: center;
+    opacity: 0.75;
+    margin-bottom: 35px;
+}
+
+
+/* ----------------------------------------------------
+   CARDS — Panels Cyber
+---------------------------------------------------- */
+.card {
+    background: var(--card-bg);
+    padding: 25px;
+    margin: 30px 0;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 18px rgba(60, 150, 255, 0.18);
+}
+
+
+/* ----------------------------------------------------
+   TEXTAREA — SCAN EFFECT
+---------------------------------------------------- */
+textarea {
+    width: 100%;
+    height: 180px;
+    background: rgba(5, 12, 25, 0.85);
+    border: 1px solid rgba(90, 160, 255, 0.35);
+    border-radius: 10px;
+    color: var(--text-color);
+    padding: 12px;
+    font-size: 1rem;
+    resize: none;
+    outline: none;
+    box-shadow: inset 0 0 15px rgba(60, 150, 255, 0.25);
+    animation: scanGlow 3s infinite linear;
+}
+
+@keyframes scanGlow {
+    0%   { box-shadow: inset 0 0 10px rgba(60, 150, 255, 0.2); }
+    50%  { box-shadow: inset 0 0 25px rgba(60, 150, 255, 0.45); }
+    100% { box-shadow: inset 0 0 10px rgba(60, 150, 255, 0.2); }
+}
+
+
+/* ----------------------------------------------------
+   BUTTONS
+---------------------------------------------------- */
+button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: 0.25s;
+    box-shadow: 0 0 14px var(--accent-glow);
+}
+
+button:hover {
+    transform: scale(1.07);
+    box-shadow: 0 0 24px var(--accent-glow);
+}
+
+
+/* ----------------------------------------------------
+   CHATBOX
+---------------------------------------------------- */
+.chatbox {
+    background: rgba(5, 12, 25, 0.85);
+    height: 260px;
+    padding: 15px;
+    overflow-y: auto;
+    border-radius: 10px;
+    border: 1px solid rgba(60, 150, 255, 0.3);
+    box-shadow: inset 0 0 12px rgba(60, 150, 255, 0.25);
+}
+
+.message-user {
+    text-align: right;
+    margin-bottom: 12px;
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.message-bot {
+    text-align: left;
+    margin-bottom: 12px;
+}
+
+/* ----------------------------------------------------
+   CHAT INPUT
+---------------------------------------------------- */
+.chat-input {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(5, 12, 25, 0.85);
+    border: 1px solid rgba(60, 150, 255, 0.35);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+
+/* ----------------------------------------------------
+   PHISHING RESULT CARD
+---------------------------------------------------- */
+.phishing-card {
+    background: rgba(5, 12, 25, 0.85);
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(60, 150, 255, 0.35);
+    box-shadow: inset 0 0 15px rgba(60, 150, 255, 0.25);
+}
+/* -----------------------------
+   Matrix Digital Rain Canvas
+   ----------------------------- */
+#matrixCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;              /* derrière tout le contenu */
+  pointer-events: none;     /* ne capture pas les clics */
+  opacity: 0.45;            /* ajuster visibilité globale */
+  mix-blend-mode: screen;   /* léger blending pour beau rendu */
+  background: radial-gradient(circle at 50% 10%, rgba(0,24,64,0.20), rgba(0,8,20,0.75));
+}
+
+/* ----------------------------------------------------
+   STYLES POUR LES RÉSULTATS AMÉLIORÉS
+---------------------------------------------------- */
+
+/* Mots-clés en tags */
+.keyword-tag {
+    display: inline-block;
+    background: rgba(63, 164, 255, 0.2);
+    border: 1px solid rgba(63, 164, 255, 0.4);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: 2px 4px 2px 0;
+    font-size: 0.9em;
+    color: #a8d0ff;
+}
+
+/* URLs et exemples */
+.urls-list, .examples-list {
+    background: rgba(5, 12, 25, 0.5);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+}
+
+.url-item, .example-item {
+    padding: 8px;
+    margin: 5px 0;
+    border-bottom: 1px solid rgba(60, 150, 255, 0.1);
+}
+
+.url-item:last-child, .example-item:last-child {
+    border-bottom: none;
+}
+
+.url-item code {
+    color: #ff9966;
+    background: rgba(255, 153, 102, 0.1);
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+/* Verdict avec couleurs */
+.verdict-danger {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.verdict-warning {
+    color: #ffd93d;
+    font-weight: bold;
+}
+
+.verdict-caution {
+    color: #ffa94d;
+    font-weight: bold;
+}
+
+.verdict-safe {
+    color: #6bcf7f;
+    font-weight: bold;
+}
+
+/* Affichage de la probabilité */
+.probability-value {
+    font-size: 1.3em;
+    font-weight: bold;
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    background: rgba(63, 164, 255, 0.1);
+    border: 2px solid var(--accent);
+}
+
+.probability-value.verdict-danger {
+    background: rgba(255, 107, 107, 0.1);
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.probability-value.verdict-warning {
+    background: rgba(255, 217, 61, 0.1);
+    border-color: #ffd93d;
+    color: #ffd93d;
+}
+
+/* Sections de résultats */
+.keywords-section, .urls-section, .examples-section, .details-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(60, 150, 255, 0.2);
+}
+
+/* Animation scanning */
+.scanning {
+    animation: scanningPulse 1s infinite alternate;
+}
+
+@keyframes scanningPulse {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+}
