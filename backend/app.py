@@ -1,0 +1,368 @@
+
+# PHISHGUARD AI - BACKEND CORRIGÉ
+# Fichier : app.py
+# Usage : python app.py
+# =====================================================================
+
+# IMPORTS
+# =====================================================================
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from pyngrok import ngrok
+import os
+import numpy as np
+import re
+
+from sentence_transformers import SentenceTransformer, util
+import openai
+from openai import OpenAI
+
+# =====================================================================
+# 🔐 CONFIG OPENAI
+# =====================================================================
+OPENAI_API_KEY = "CLE"  
+
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+# =====================================================================
+# 🌐 CHARGEMENT DU MODELE
+# =====================================================================
+model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+
+# =====================================================================
+# 📌 DONNEES PHISHING
+# =====================================================================
+phishing_examples = [
+    "Votre compte bancaire a été suspendu. Veuillez vérifier votre identité ici.",
+    "Une activité suspecte a été détectée sur votre compte. Connectez-vous immédiatement.",
+    "Votre paiement a été rejeté. Mettez à jour vos informations ici.",
+    "Votre carte bancaire a été désactivée. Cliquez pour réactiver.",
+    "Votre mot de passe expirera dans 24 heures. Réinitialisez-le maintenant.",
+    "Nous avons bloqué temporairement votre compte. Réactivez-le via ce lien sécurisé.",
+    "Connexion inhabituelle détectée. Changez votre mot de passe ici.",
+    "Votre ordinateur est infecté. Appelez ce numéro immédiatement.",
+    "Microsoft a détecté un problème critique sur votre appareil. Cliquez pour réparer.",
+    "Votre colis ne peut pas être livré. Payez les frais supplémentaires ici.",
+    "Votre facture EDF d'un montant de 560€ est en retard. Réglez-la ici.",
+    "Un colis UPS est en attente de vérification d'adresse. Cliquez pour mettre à jour.",
+    "Félicitations ! Vous avez gagné un iPhone 15. Récupérez votre prix ici.",
+    "Vous êtes le gagnant de notre tirage au sort. Validez vos informations.",
+    "Votre cashback est disponible. Cliquez pour le réclamer.",
+    "Veuillez mettre à jour votre badge professionnel avant la fin du mois.",
+    "Votre compte email Outlook sera désactivé. Vérifiez votre activité ici.",
+    "Message urgent de la direction : veuillez ouvrir le document sécurisé.",
+    "Vous avez droit à un remboursement d'impôts. Soumettez votre demande.",
+    "Votre carte vitale doit être renouvelée. Cliquez ici.",
+    "Vous devez confirmer vos informations administratives pour éviter une pénalité.",
+    "Transférez vos fonds pour sécuriser votre wallet.",
+    "Vous avez reçu un paiement crypto. Connectez-vous pour l'accepter.",
+    "J'ai essayé de vous joindre. Merci d'envoyer vos identifiants rapidement.",
+    "Ceci est un message confidentiel. Connectez-vous pour lire la suite."
+]
+
+phishing_url_examples = [
+    "https://secure-login.bankofamercia.com.verify-user-session.co/login",
+    "http://update-account.hsbc-security-check.com/login/verify",
+    "https://bnpparibas.secure-auth.fr-bnpp.com/identifier",
+    "http://credit-agric0le.fr.authentification-client.net/login",
+    "https://my.societe-generale.com.secure-session-verif.com/activation",
+    "http://paypal.verify-center-account-security.com/resolution",
+    "https://paypa1-security.com/verify",
+    "http://micros0ft-support-reset.com/login",
+    "https://faceb00k-help-center.com/recover",
+    "https://g00gle-authentification-check.com/secure",
+    "http://amaz0n-client-service.net/refund",
+    "https://dhl.delivery-verification-alert.com/parcel",
+    "https://chronop0st-livraison-securisee.com/update",
+    "https://lap0ste-verification-colis.com/confirm",
+    "http://fedex-securepayment-validation.net/confirm",
+    "https://impots-gouv-fr.secure-remboursement.com/valider-demande",
+    "https://ameli.account-securite-remboursement.com/activation",
+    "http://caf.fr-dossier-urgency-validation.com/maj",
+    "http://cnss-maroc-verification.com/update",
+    "https://secure-apple-id-auth.com/reset",
+    "https://icloud-session-verification.net/validate",
+    "http://windows-update-security-alert.com/auth",
+    "https://android-google-security-check.co/login",
+    "http://visa-card-secure-validation.com/check",
+    "https://mastercard-verification-alert.net/verify",
+    "http://stripe-security-warning.com/account/update",
+    "http://bit.ly/8Fs2vLoginSecure",
+    "https://tinyurl.com/secure-update-session123",
+    "http://shrtco.de/verify-pay",
+    "http://is.gd/bankloginreset",
+    "https://paypal.com.secure-session-check.com/login",
+    "https://apple.com.id-verification-urgent.net/auth",
+    "http://google.com.recovery-alert-support.org/login",
+    "http://amazon.fr.refund-secure-zone.info/session",
+    "https://verify-login-now.xyz/account",
+    "https://security-alerts-online.info/urgent-check",
+    "http://update-payment-now.top/auth",
+    "http://urgent-verification.me/check",
+    "http://example.com/redirect/secure/?url=paypal.verify-center.com",
+    "https://secure-checking.net/forward/?session=appleid.auth-reset.com",
+    "http://track-url.co/?go=bank-verification-alert.net",
+    "https://it6-consulting.verify-identity-security.com/update",
+    "http://it6-consulting.support-auth-check.net/login",
+    "https://binance.login-auth-secure.net/verify",
+    "http://coinbase.security-alert-recover.com/account",
+    "https://crypto-gain-secure-check.info/login",
+    "http://secure-update-now.com/login",
+    "https://account-verification-center.net/auth",
+    "http://reset-your-password-alert.info/urgent",
+    "https://login-check-security.top/verify",
+]
+
+phishing_keywords = [
+    "vérifier", "réinitialiser", "urgent", "immédiatement", "compromis", "sécurité",
+    "mot de passe", "carte bancaire", "identité", "connexion inhabituelle",
+    "cliquez", "gagné", "réclamation", "frais", "paiement", "bloqué",
+    "désactivé", "réactiver", "mise à jour", "facture", "colis",
+    "problème critique", "infecté", "support", "confidentiel", "wallet",
+    "crypto", "pénalité", "remboursement"
+]
+
+# =====================================================================
+# VECTOR STORE POUR RAG 
+# =====================================================================
+vector_store = []
+rag_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+base_contexts = [
+    "Le phishing est une technique de fraude en ligne pour voler des informations personnelles.",
+    "Les attaques de phishing utilisent souvent des emails qui semblent légitimes.",
+    "Ne cliquez jamais sur des liens dans des emails non sollicités.",
+    "Vérifiez toujours l'URL du site avant d'entrer vos identifiants.",
+    "Les banques ne demandent jamais vos mots de passe par email.",
+    "Le spear phishing cible des individus spécifiques avec des informations personnalisées.",
+    "Le whaling cible des cadres supérieurs et des dirigeants d'entreprise.",
+    "Les attaques BEC (Business Email Compromise) visent à tromper les employés pour qu'ils transfèrent des fonds.",
+    "Les emails de phishing contiennent souvent des fautes d'orthographe et de grammaire.",
+    "Les URL de phishing imitent souvent les domaines légitimes avec de petites variations.",
+    "Utilisez l'authentification à deux facteurs pour protéger vos comptes.",
+    "Signalez toujours les emails suspects à votre service informatique.",
+    "Le phishing est une technique d'ingénierie sociale qui vise à voler des identifiants, mots de passe, données bancaires ou informations personnelles.",
+    "Les attaques de phishing arrivent majoritairement par email, mais aussi par SMS (smishing), appels (vishing) et réseaux sociaux.",
+    "Les attaquants créent souvent un sentiment d'urgence ou de peur pour pousser à l'action rapide.",
+    "Ne cliquez jamais sur un lien reçu dans un email ou SMS pour vous connecter : tapez toujours l'adresse officielle vous-même.",
+    "Les vraies institutions (banques, impôts, ameli, CAF...) ne demandent JAMAIS vos mots de passe ou codes par email/SMS.",
+    "Vérifiez toujours l'URL complète dans la barre d'adresse avant de saisir des identifiants.",
+    "Activez l'authentification à deux facteurs (2FA) sur tous vos comptes importants.",
+    "Les emails de phishing contiennent souvent des fautes d'orthographe ou des formulations étranges.",
+    "Méfiez-vous des adresses email suspectes : @gmail.com pour une banque, @micr0soft-support.com, etc.",
+    "Les liens raccourcis (bit.ly, tinyurl...) peuvent cacher une destination dangereuse.",
+    "Si vous pensez avoir été victime : changez immédiatement vos mots de passe depuis un appareil sûr.",
+    "Signalez les tentatives de phishing à phishing@signalement.gouv.fr (en France).",
+    "Utilisez un gestionnaire de mots de passe pour avoir des mots de passe uniques et complexes.",
+    "Mettez régulièrement à jour votre ordinateur, téléphone et applications.",
+    "Ne donnez jamais accès à distance à votre ordinateur à une personne inconnue au téléphone."
+]
+
+for context in base_contexts:
+    vec = rag_model.encode(context)
+    vector_store.append({"text": context, "vector": vec})
+
+# =====================================================================
+# EMBEDDINGS
+# =====================================================================
+phishing_embeddings = model.encode(phishing_examples, convert_to_tensor=True)
+url_embeddings = model.encode(phishing_url_examples, convert_to_tensor=True)
+
+# =====================================================================
+# ✂️ EXTRACTION D'URL
+# =====================================================================
+def extract_urls(text):
+    pattern = r"(https?://[^\s]+)"
+    return re.findall(pattern, text)
+
+# =====================================================================
+# 🔎 SIMILARITÉ URL
+# =====================================================================
+def retrieve_similar_url(url):
+    embedding = model.encode([url], convert_to_tensor=True)
+    similarities = util.pytorch_cos_sim(embedding, url_embeddings)[0]
+    top_k = similarities.topk(1)
+    score = float(top_k.values[0])
+    similar_example = phishing_url_examples[int(top_k.indices[0])]
+    return score, similar_example
+
+# =====================================================================
+# 🔍 RAG SEARCH
+# =====================================================================
+def retrieve_similar(query, top_k=3):
+    query_vec = rag_model.encode(query)
+    similarities = []
+    for item in vector_store:
+        sim = np.dot(query_vec, item["vector"]) / (np.linalg.norm(query_vec) * np.linalg.norm(item["vector"]))
+        similarities.append((item["text"], sim))
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    return similarities[:top_k]
+
+def rag_search(query, top_k=4):
+    results = retrieve_similar(query, top_k)
+    return [r[0] for r in results]
+
+# =====================================================================
+# 🛡️ SIMILARITY FUNCTION
+# =====================================================================
+def similarity(text1, text2):
+    vec1 = model.encode([text1], convert_to_tensor=True)
+    vec2 = model.encode([text2], convert_to_tensor=True)
+    return float(util.pytorch_cos_sim(vec1, vec2)[0][0])
+
+# =====================================================================
+# 🤖 CHATBOT IA AVEC RAG
+# =====================================================================
+def chatbot_answer(question):
+    context_chunks = rag_search(question, top_k=4)
+    context = "\n\n".join(context_chunks)
+
+    prompt = f"""
+Tu es un assistant spécialisé dans la cybersécurité et la détection du phishing.
+Utilise UNIQUEMENT le contexte pour répondre.
+Réponds clairement et simplement.
+
+CONTEXTE :
+{context}
+
+QUESTION :
+{question}
+
+Réponse :
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content
+
+# =====================================================================
+# 🚀 FLASK API
+# =====================================================================
+app = Flask(__name__)
+CORS(app)
+
+@app.route("/detect", methods=["POST"])
+def detect_phishing():
+    data = request.get_json()
+    text = data.get("text", "")
+
+    if not text:
+        return jsonify({"error": "no text provided"}), 400
+
+    text_lower = text.lower()
+    word_count = len(text.split())
+
+    # 1. Détection mots-clés exacts
+    detected_keywords = [
+        k for k in phishing_keywords if k.lower() in text_lower
+    ]
+    keyword_score = len(detected_keywords) * 0.25
+
+    # 2. URLs suspectes
+    detected_urls = []
+    found_urls = extract_urls(text)
+    for url in found_urls:
+        score, similar_url = retrieve_similar_url(url)
+        if score > 0.80:
+            detected_urls.append(similar_url)
+    url_score = len(detected_urls) * 0.40
+
+    # 3. Similarités avec mails de phishing
+    similar_phrases = []
+    if len(text) >= 60 and len(text.split()) >= 8:
+        for example in phishing_examples:
+            if similarity(text, example) > 0.45:
+                similar_phrases.append(example)
+    similarity_score = len(similar_phrases) * 0.35
+
+    # 4. Score FINAL
+    score = (
+        keyword_score * 0.25 +
+        url_score * 0.35 +
+        similarity_score * 0.40
+    )
+
+    # 5. Ajustements contextuels
+    if len(detected_urls) == 0 and word_count < 15:
+        score *= 0.6
+
+    if len(detected_keywords) >= 3 and word_count > 50:
+        score *= 0.7
+
+    probability = min(1.0, score)
+    probability_pct = int(probability * 100)
+
+    # 6. Verdict
+    if probability_pct >= 70:
+        verdict = "PHISHING TRÈS PROBABLE"
+        risk_level = "danger"
+    elif probability_pct >= 50:
+        verdict = "Phishing probable"
+        risk_level = "warning"
+    elif probability_pct >= 30:
+        verdict = "Suspicieux"
+        risk_level = "caution"
+    else:
+        verdict = "Probablement légitime"
+        risk_level = "safe"
+
+    # 7. URLs trouvées
+    found_urls = extract_urls(text)
+
+    return jsonify({
+        "verdict": verdict,
+        "risk_level": risk_level,
+        "probability": probability_pct,
+        "keywords": detected_keywords,
+        "similar_examples": similar_phrases,
+        "suspicious_urls": detected_urls,
+        "found_urls": found_urls,
+        "analysis_details": {
+            "keyword_score": f"{keyword_score:.2f}",
+            "url_score": f"{url_score:.2f}",
+            "similarity_score": f"{similarity_score:.2f}",
+            "total_score": f"{score:.2f}",
+            "word_count": word_count,
+            "adjustments_applied": {
+                "short_text_no_url": len(detected_urls) == 0 and word_count < 15,
+                "many_keywords_long_text": len(detected_keywords) >= 3 and word_count > 50
+            }
+        }
+    })
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    user_msg = request.json.get("message", "")
+    answer = chatbot_answer(user_msg)
+    return jsonify({"reply": answer})
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "message": "API de détection de phishing et chatbot",
+        "endpoints": {
+            "/detect (POST)": "Analyse un texte pour détecter le phishing",
+            "/chat (POST)": "Chatbot sur la cybersécurité",
+            "/ (GET)": "Cette page d'accueil"
+        }
+    })
+
+# =====================================================================
+# 🌍 LANCEMENT NGROK
+# =====================================================================
+if __name__ == "__main__":
+    NGROK_AUTH_TOKEN = "36GBRsF7NSPAISduMavie9SUlgA_4cwfQ1QLrGiCJj4u21U5b"
+    ngrok.set_auth_token(NGROK_AUTH_TOKEN)
+
+    tunnels = ngrok.get_tunnels()
+    for t in tunnels:
+        ngrok.disconnect(t.public_url)
+
+    public_url = ngrok.connect(5000)
+    print(f"🚀 Backend accessible sur : {public_url}")
+
+    app.run(port=5000, debug=False)
